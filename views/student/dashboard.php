@@ -205,31 +205,79 @@
     <div class="row align-items-center">
         <div class="col-md-8">
             <h1 class="mb-2"><i class="fas fa-user-graduate me-3"></i>Bảng điều khiển học viên</h1>
-            <p class="mb-0 opacity-75">Chào mừng trở lại, <strong><?= htmlspecialchars($_SESSION['fullname'] ?? $_SESSION['username']) ?></strong>!</p>
+            <p class="mb-0 opacity-75">Chào mừng  <strong><?= htmlspecialchars($_SESSION['fullname'] ?? $_SESSION['username']) ?></strong>!</p>
         </div>
     </div>
 </div>
 
 <!-- Stats Row -->
 <div class="row mb-4">
+    <?php
+    // 1. KẾT NỐI VÀ LẤY DỮ LIỆU THỐNG KÊ
+    // Kiểm tra nếu chưa có kết nối thì tạo mới (đề phòng lỗi undefined variable)
+    if (!isset($conn)) {
+        $conn = mysqli_connect("localhost", "root", "", "onlinecourse");
+        mysqli_set_charset($conn, 'utf8');
+    }
+
+    // Khởi tạo giá trị mặc định
+    $dang_hoc = 0;
+    $hoan_thanh = 0;
+    $trung_binh = 0;
+
+    if (isset($_SESSION['username'])) {
+        // B1: Lấy ID của học viên từ username
+        $sql_get_id = "SELECT id FROM users WHERE username = '" . $_SESSION['username'] . "'";
+        $res_id = mysqli_query($conn, $sql_get_id);
+        
+        if ($res_id && mysqli_num_rows($res_id) > 0) {
+            $row_user = mysqli_fetch_assoc($res_id);
+            $student_id = $row_user['id'];
+
+            // B2: Đếm khóa học đang học (status = 'active')
+            $sql_active = "SELECT COUNT(*) as total FROM enrollments 
+                           WHERE student_id = $student_id AND status = 'active'";
+            $res_active = mysqli_query($conn, $sql_active);
+            $data_active = mysqli_fetch_assoc($res_active);
+            $dang_hoc = $data_active['total'];
+
+            // B3: Đếm khóa học đã hoàn thành (status = 'completed')
+            $sql_completed = "SELECT COUNT(*) as total FROM enrollments 
+                              WHERE student_id = $student_id AND status = 'completed'";
+            $res_completed = mysqli_query($conn, $sql_completed);
+            $data_completed = mysqli_fetch_assoc($res_completed);
+            $hoan_thanh = $data_completed['total'];
+
+            // B4: Tính % trung bình (AVG progress)
+            $sql_avg = "SELECT AVG(progress) as avg_prog FROM enrollments WHERE student_id = $student_id";
+            $res_avg = mysqli_query($conn, $sql_avg);
+            $data_avg = mysqli_fetch_assoc($res_avg);
+            // Làm tròn số (ví dụ 45.6 -> 46)
+            $trung_binh = round($data_avg['avg_prog'] ?? 0); 
+        }
+    }
+    ?>
+
     <div class="col-md-4 mb-3 mb-md-0">
         <div class="stats-card">
             <i class="fas fa-book text-info" style="font-size: 28px;"></i>
-            <h3>5</h3>
+            <h3><?= $dang_hoc ?></h3>
             <p>Khóa học đang học</p>
         </div>
     </div>
+
     <div class="col-md-4 mb-3 mb-md-0">
         <div class="stats-card">
             <i class="fas fa-chart-line text-success" style="font-size: 28px;"></i>
-            <h3>45%</h3>
+            <h3><?= $trung_binh ?>%</h3>
             <p>Mức độ hoàn thành trung bình</p>
         </div>
     </div>
+
     <div class="col-md-4 mb-3 mb-md-0">
         <div class="stats-card">
             <i class="fas fa-trophy text-warning" style="font-size: 28px;"></i>
-            <h3>2</h3>
+            <h3><?= $hoan_thanh ?></h3>
             <p>Khóa học hoàn thành</p>
         </div>
     </div>
@@ -239,26 +287,50 @@
 <div class="row mt-5">
     <!-- Sidebar Profile -->
     <div class="col-lg-3 mb-4">
-        <div class="profile-card text-center">
-            <div class="bg-light p-4">
-                <img src="https://via.placeholder.com/120" class="profile-avatar mb-3" alt="Avatar">
-                <h5 class="mb-1"><?= htmlspecialchars($_SESSION['fullname'] ?? $_SESSION['username']) ?></h5>
-                <p class="text-muted mb-0">Học viên</p>
+    <div class="profile-card text-center">
+        <div class="bg-light p-4">
+            <img src="https://via.placeholder.com/120" class="profile-avatar mb-3" alt="Avatar">
+            <h5 class="mb-1"><?= htmlspecialchars($_SESSION['fullname'] ?? $_SESSION['username']) ?></h5>
+            <p class="text-muted mb-0">Học viên</p>
+        </div>
+        
+        <div class="p-4">
+            <div class="d-grid gap-2 mb-3">
+                <a href="#" class="btn btn-primary btn-sm rounded-pill">
+                    <i class="fas fa-user-edit me-2"></i>Chỉnh sửa hồ sơ
+                </a>
             </div>
-            <div class="p-4">
-                <div class="d-grid gap-2 mb-3">
-                    <a href="#" class="btn btn-primary btn-sm rounded-pill">
-                        <i class="fas fa-user-edit me-2"></i>Chỉnh sửa hồ sơ
-                    </a>
-                </div>
-                <hr>
-                <div class="text-start small">
-                    <p class="mb-2"><strong>Email:</strong><br><?= htmlspecialchars($_SESSION['email'] ?? 'N/A') ?></p>
-                    <p class="mb-0"><strong>Tham gia:</strong><br>01/01/2024</p>
-                </div>
+            
+            <hr>
+            
+            <div class="text-start small">
+                <?php 
+                    // Kết nối CSDL tại đây để tránh lỗi "Undefined variable $conn"
+                    $conn = mysqli_connect("localhost", "root", "", "onlinecourse");
+                    mysqli_set_charset($conn, 'utf8');
+
+                    // Truy vấn lấy thông tin
+                    if (isset($_SESSION['username'])) {
+                        $user_query = mysqli_query($conn, "SELECT email, created_at FROM users WHERE username = '" . $_SESSION['username'] . "'");
+                        if ($user_query) {
+                            $user_data = mysqli_fetch_assoc($user_query);
+                        }
+                    }
+                ?>
+
+                <p class="mb-2">
+                    <strong>Email:</strong><br>
+                    <?= htmlspecialchars($user_data['email'] ?? $_SESSION['email'] ?? 'Đang cập nhật') ?>
+                </p>
+                
+                <p class="mb-0">
+                    <strong>Tham gia:</strong><br>
+                    <?= isset($user_data['created_at']) ? date('d/m/Y', strtotime($user_data['created_at'])) : 'Đang cập nhật' ?>
+                </p>
             </div>
         </div>
     </div>
+</div>
 
     <!-- Courses Section -->
     <div class="col-lg-9">
@@ -278,261 +350,172 @@
 
         <div class="tab-content">
             <!-- Khóa học của tôi -->
-            <div class="tab-pane fade show active" id="tab-my-courses" role="tabpanel">
-                <h4 class="mb-4 fw-bold">
-                    <i class="fas fa-play-circle me-2 text-primary"></i>Khóa học đang học
-                </h4>
+            
 
-                <!-- Course 1 -->
-                <div class="course-card-item">
-                    <div class="row g-0">
-                        <div class="col-md-4">
-                            <img src="https://via.placeholder.com/400x250?text=PHP+Web" class="course-thumbnail w-100 h-100" alt="PHP Web">
-                        </div>
-                        <div class="col-md-8">
-                            <div class="p-4">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div>
-                                        <h5 class="card-title mb-1">Lập trình Web PHP cơ bản</h5>
-                                        <p class="text-muted mb-0">
-                                            <i class="fas fa-user-tie me-2"></i>Giảng viên: Thầy Giáo Ba
-                                        </p>
-                                    </div>
-                                    <span class="badge bg-primary">3/8 bài học</span>
-                                </div>
-                                
-                                <p class="text-muted mb-3" style="font-size: 14px;">
-                                    Học các kiến thức nền tảng về lập trình web với PHP, từ cơ bản đến nâng cao.
-                                </p>
-                                
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <small class="text-muted">Tiến độ học tập</small>
-                                        <small class="fw-bold text-primary">45%</small>
-                                    </div>
-                                    <div class="progress-custom">
-                                        <div class="progress-bar" role="progressbar" style="width: 45%"></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="d-flex gap-2">
-                                    <a href="#" class="btn btn-primary btn-sm rounded-pill">
-                                        <i class="fas fa-play me-2"></i>Tiếp tục học
-                                    </a>
-                                    <a href="#" class="btn btn-outline-secondary btn-sm rounded-pill">
-                                        <i class="fas fa-list me-2"></i>Xem bài học
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+                <div class="tab-pane fade show active" id="tab-my-courses" role="tabpanel">
+    <h4 class="mb-4 fw-bold">
+        <i class="fas fa-play-circle me-2 text-primary"></i>Khóa học đang học
+    </h4>
+
+    <?php if (count($my_courses) > 0): ?>
+        <?php foreach ($my_courses as $myCourse): ?>
+            <div class="course-card-item">
+                <div class="row g-0">
+                    <div class="col-md-4">
+                        <img src="<?= !empty($myCourse['image']) ? 'upload/courses/' . $myCourse['image'] : 'https://via.placeholder.com/400x250?text=Course' ?>" 
+                             class="course-thumbnail w-100 h-100" style="object-fit: cover;" alt="Course Img">
                     </div>
-                </div>
-
-                <!-- Course 2 -->
-                <div class="course-card-item">
-                    <div class="row g-0">
-                        <div class="col-md-4">
-                            <img src="https://via.placeholder.com/400x250?text=JavaScript" class="course-thumbnail w-100 h-100" alt="JavaScript">
-                        </div>
-                        <div class="col-md-8">
-                            <div class="p-4">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div>
-                                        <h5 class="card-title mb-1">JavaScript Nâng cao</h5>
-                                        <p class="text-muted mb-0">
-                                            <i class="fas fa-user-tie me-2"></i>Giảng viên: Thầy A
-                                        </p>
-                                    </div>
-                                    <span class="badge bg-warning">2/10 bài học</span>
+                    <div class="col-md-8">
+                        <div class="p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="card-title mb-1"><?= htmlspecialchars($myCourse['title']) ?></h5>
+                                    <p class="text-muted mb-0">
+                                        <i class="fas fa-user-tie me-2"></i>GV: <?= htmlspecialchars($myCourse['instructor_name']) ?>
+                                    </p>
                                 </div>
-                                
-                                <p class="text-muted mb-3" style="font-size: 14px;">
-                                    Khám phá các kỹ thuật JavaScript hiện đại, async/await, promises và DOM manipulation.
-                                </p>
-                                
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <small class="text-muted">Tiến độ học tập</small>
-                                        <small class="fw-bold text-primary">20%</small>
-                                    </div>
-                                    <div class="progress-custom">
-                                        <div class="progress-bar" role="progressbar" style="width: 20%"></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="d-flex gap-2">
-                                    <a href="#" class="btn btn-primary btn-sm rounded-pill">
-                                        <i class="fas fa-play me-2"></i>Tiếp tục học
-                                    </a>
-                                    <a href="#" class="btn btn-outline-secondary btn-sm rounded-pill">
-                                        <i class="fas fa-list me-2"></i>Xem bài học
-                                    </a>
-                                </div>
+                                <?php if($myCourse['progress'] == 100): ?>
+                                    <span class="badge bg-success">Hoàn thành</span>
+                                <?php else: ?>
+                                    <span class="badge bg-warning text-dark">Đang học</span>
+                                <?php endif; ?>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <hr class="my-5">
-
-                <h4 class="mb-4 fw-bold">
-                    <i class="fas fa-check-circle me-2 text-success"></i>Khóa học đã hoàn thành
-                </h4>
-
-                <!-- Completed Course -->
-                <div class="course-card-item">
-                    <div class="row g-0">
-                        <div class="col-md-4">
-                            <img src="https://via.placeholder.com/400x250?text=HTML+CSS" class="course-thumbnail w-100 h-100" alt="HTML CSS">
-                        </div>
-                        <div class="col-md-8">
-                            <div class="p-4">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <div>
-                                        <h5 class="card-title mb-1">HTML & CSS Cơ bản</h5>
-                                        <p class="text-muted mb-0">
-                                            <i class="fas fa-user-tie me-2"></i>Giảng viên: Thầy B
-                                        </p>
-                                    </div>
-                                    <span class="badge bg-success">8/8 bài học</span>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <small class="text-muted">Tiến độ học tập</small>
+                                    <small class="fw-bold text-primary"><?= $myCourse['progress'] ?>%</small>
                                 </div>
-                                
-                                <p class="text-muted mb-3" style="font-size: 14px;">
-                                    Khóa học HTML & CSS từ cơ bản đến nâng cao.
-                                </p>
-                                
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <small class="text-muted">Hoàn thành</small>
-                                        <small class="fw-bold text-success">100%</small>
-                                    </div>
-                                    <div class="progress-custom">
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="d-flex gap-2">
-                                    <a href="#" class="btn btn-success btn-sm rounded-pill">
-                                        <i class="fas fa-certificate me-2"></i>Xem chứng chỉ
-                                    </a>
-                                    <a href="#" class="btn btn-outline-secondary btn-sm rounded-pill">
-                                        <i class="fas fa-redo me-2"></i>Ôn tập
-                                    </a>
-                                </div>
+                                <div class="progress-custom" style="height: 8px; background: #e9ecef; border-radius: 10px; overflow: hidden;">
+    <div class="progress-bar bg-success" role="progressbar" 
+         style="width: <?= $myCourse['progress'] ?>%; height: 100%; border-radius: 10px; transition: width 0.5s;">
+    </div>
+</div>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <a href="index.php?controller=lesson&action=learn&course_id=<?= $myCourse['id'] ?>" class="btn btn-primary btn-sm rounded-pill">
+    <i class="fas fa-play me-2"></i>Vào học ngay
+</a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <div class="text-center py-5 bg-white rounded shadow-sm">
+            <i class="fas fa-book-open text-muted mb-3" style="font-size: 50px;"></i>
+            <h5>Bạn chưa đăng ký khóa học nào</h5>
+            <p class="text-muted">Hãy khám phá các khóa học thú vị ngay bên tab "Khám phá" nhé!</p>
+        </div>
+    <?php endif; ?>
+</div>
+                  
+
+                
+            
+
+                
+
+                
+
+                
+                
+                          
+            
 
             <!-- Khám phá khóa học -->
             <div class="tab-pane fade" id="tab-explore" role="tabpanel">
                 <div class="filter-section">
-                    <div class="row align-items-end gap-3">
-                        <div class="col-md-4">
-                            <label class="form-label"><i class="fas fa-search me-2"></i>Tìm kiếm</label>
-                            <input type="text" class="form-control" placeholder="Tìm khóa học...">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label"><i class="fas fa-filter me-2"></i>Danh mục</label>
-                            <select class="form-select">
-                                <option>Tất cả danh mục</option>
-                                <option>Lập trình</option>
-                                <option>Thiết kế</option>
-                                <option>Marketing</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label"><i class="fas fa-sort me-2"></i>Sắp xếp</label>
-                            <select class="form-select">
-                                <option>Phổ biến nhất</option>
-                                <option>Mới nhất</option>
-                                <option>Giá thấp đến cao</option>
-                                <option>Giá cao đến thấp</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+    <form action="index.php" method="GET">
+        <input type="hidden" name="controller" value="student">
+        <input type="hidden" name="action" value="dashboard">
+        <input type="hidden" name="tab" value="explore"> 
 
-                <div class="course-grid">
-                    <!-- Course Card 1 -->
-                    <div class="course-card">
-                        <img src="https://via.placeholder.com/300x160?text=React+Basics" class="course-card-image" alt="React">
-                        <div class="course-card-body">
-                            <h6 class="course-card-title">React.js Từ Cơ Bản Đến Nâng Cao</h6>
-                            <p class="course-card-instructor"><i class="fas fa-user me-1"></i>Thầy Minh</p>
-                            <p class="course-price">890,000 đ</p>
-                            <button class="btn btn-register">
-                                <i class="fas fa-plus me-1"></i>Đăng ký
-                            </button>
-                        </div>
-                    </div>
+        <div class="row align-items-end gap-3">
+            <div class="col-md-4">
+                <label class="form-label"><i class="fas fa-search me-2"></i>Tìm kiếm</label>
+                <input type="text" name="keyword" class="form-control" 
+                       placeholder="Tìm khóa học..." 
+                       value="<?= isset($_GET['keyword']) ? htmlspecialchars($_GET['keyword']) : '' ?>">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-filter me-2"></i>Danh mục</label>
+                <select name="category_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">Tất cả danh mục</option>
+                    <?php foreach ($categories as $cat): ?>
+                        <option value="<?= $cat['id'] ?>" <?= (isset($_GET['category_id']) && $_GET['category_id'] == $cat['id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($cat['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label"><i class="fas fa-sort me-2"></i>Sắp xếp</label>
+                <select name="sort" class="form-select" onchange="this.form.submit()">
+                    <option value="newest" <?= (isset($_GET['sort']) && $_GET['sort'] == 'newest') ? 'selected' : '' ?>>Mới nhất</option>
+                    <option value="price_asc" <?= (isset($_GET['sort']) && $_GET['sort'] == 'price_asc') ? 'selected' : '' ?>>Giá thấp đến cao</option>
+                    <option value="price_desc" <?= (isset($_GET['sort']) && $_GET['sort'] == 'price_desc') ? 'selected' : '' ?>>Giá cao đến thấp</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i></button>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="course-grid">
+    <?php if (count($courses) > 0): ?>
+        <?php foreach ($courses as $course): ?>
+            <div class="course-card">
+                <img src="<?= !empty($course['image']) ? 'upload/courses/' . $course['image'] : 'https://via.placeholder.com/300x160?text=No+Image' ?>" 
+                     class="course-card-image" alt="<?= htmlspecialchars($course['title']) ?>">
+                
+                <div class="course-card-body">
+    <div class="d-flex gap-1 mb-2">
+        <span class="badge bg-info text-dark" style="font-size: 11px;">
+            <?= htmlspecialchars($course['category_name']) ?>
+        </span>
+        <span class="badge bg-secondary" style="font-size: 11px;">
+            <?= htmlspecialchars($course['level']) ?>
+        </span>
+    </div>
 
-                    <!-- Course Card 2 -->
-                    <div class="course-card">
-                        <img src="https://via.placeholder.com/300x160?text=Python+Dev" class="course-card-image" alt="Python">
-                        <div class="course-card-body">
-                            <h6 class="course-card-title">Python cho Lập Trình Viên</h6>
-                            <p class="course-card-instructor"><i class="fas fa-user me-1"></i>Thầy Sơn</p>
-                            <p class="course-price">750,000 đ</p>
-                            <button class="btn btn-register">
-                                <i class="fas fa-plus me-1"></i>Đăng ký
-                            </button>
-                        </div>
-                    </div>
+    <h6 class="course-card-title mb-1" style="min-height: 40px;">
+        <?= htmlspecialchars($course['title']) ?>
+    </h6>
 
-                    <!-- Course Card 3 -->
-                    <div class="course-card">
-                        <img src="https://via.placeholder.com/300x160?text=Web+Design" class="course-card-image" alt="Design">
-                        <div class="course-card-body">
-                            <h6 class="course-card-title">Thiết Kế Web Responsive</h6>
-                            <p class="course-card-instructor"><i class="fas fa-user me-1"></i>Cô Linh</p>
-                            <p class="course-price">650,000 đ</p>
-                            <button class="btn btn-register">
-                                <i class="fas fa-plus me-1"></i>Đăng ký
-                            </button>
-                        </div>
-                    </div>
+    <p class="course-card-instructor text-muted small mb-2">
+        <i class="fas fa-user-tie me-1"></i>GV: <?= htmlspecialchars($course['instructor_name']) ?>
+    </p>
 
-                    <!-- Course Card 4 -->
-                    <div class="course-card">
-                        <img src="https://via.placeholder.com/300x160?text=Vue+JS" class="course-card-image" alt="Vue">
-                        <div class="course-card-body">
-                            <h6 class="course-card-title">Vue.js Master Class</h6>
-                            <p class="course-card-instructor"><i class="fas fa-user me-1"></i>Thầy Duy</p>
-                            <p class="course-price">920,000 đ</p>
-                            <button class="btn btn-register">
-                                <i class="fas fa-plus me-1"></i>Đăng ký
-                            </button>
-                        </div>
-                    </div>
+    <div class="small text-muted mb-3">
+        <p class="mb-1"><i class="far fa-clock me-1"></i>Thời lượng: <?= $course['duration_weeks'] ?? 'Unknown' ?> tuần</p>
+        <p class="mb-0" style="font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+            <?= htmlspecialchars($course['description']) ?>
+        </p>
+    </div>
 
-                    <!-- Course Card 5 -->
-                    <div class="course-card">
-                        <img src="https://via.placeholder.com/300x160?text=Digital+Marketing" class="course-card-image" alt="Marketing">
-                        <div class="course-card-body">
-                            <h6 class="course-card-title">Digital Marketing Toàn Diện</h6>
-                            <p class="course-card-instructor"><i class="fas fa-user me-1"></i>Cô Hoa</p>
-                            <p class="course-price">580,000 đ</p>
-                            <button class="btn btn-register">
-                                <i class="fas fa-plus me-1"></i>Đăng ký
-                            </button>
-                        </div>
-                    </div>
+    <hr class="my-2" style="opacity: 0.1;">
 
-                    <!-- Course Card 6 -->
-                    <div class="course-card">
-                        <img src="https://via.placeholder.com/300x160?text=Node+JS" class="course-card-image" alt="Node">
-                        <div class="course-card-body">
-                            <h6 class="course-card-title">Node.js API Development</h6>
-                            <p class="course-card-instructor"><i class="fas fa-user me-1"></i>Thầy Tuấn</p>
-                            <p class="course-price">1,050,000 đ</p>
-                            <button class="btn btn-register">
-                                <i class="fas fa-plus me-1"></i>Đăng ký
-                            </button>
-                        </div>
-                    </div>
-                </div>
+    <div class="d-flex justify-content-between align-items-center">
+        <span class="course-price text-primary fw-bold" style="font-size: 15px;">
+            <?= number_format($course['price'], 0, ',', '.') ?> đ
+        </span>
+        <a href="index.php?controller=course&action=detail&id=<?= $course['id'] ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+            Chi tiết <i class="fas fa-arrow-right ms-1"></i>
+        </a>
+    </div>
+</div>
+            </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <div class="col-12 text-center py-5">
+            <p class="text-muted">Không tìm thấy khóa học nào phù hợp.</p>
+        </div>
+    <?php endif; ?>
+</div>
             </div>
         </div>
     </div>
