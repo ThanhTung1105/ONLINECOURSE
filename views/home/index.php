@@ -91,8 +91,9 @@
                 <div class="col-md-4">
                     <div class="card h-100 shadow-sm border-0 hover-card">
                         <div class="position-relative">
-                            <img src="<?= !empty($course['image']) ? 'upload/courses/' . $course['image'] : 'https://via.placeholder.com/400x250?text=Course' ?>" 
-                                 class="card-img-top" alt="Course" style="height: 200px; object-fit: cover;">
+                            <img src="<?= BASE_URL ?>assets/uploads/courses/<?= htmlspecialchars($course['image']) ?>" 
+     class="card-img-top" alt="<?= htmlspecialchars($course['title']) ?>" 
+     style="height: 180px; object-fit: cover;">
                             <span class="badge bg-primary position-absolute top-0 end-0 m-3">
                                 <?= htmlspecialchars($course['level']) ?>
                             </span>
