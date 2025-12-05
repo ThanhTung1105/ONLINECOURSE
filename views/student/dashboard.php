@@ -492,7 +492,7 @@
 
     <div class="small text-muted mb-3">
         <p class="mb-1"><i class="far fa-clock me-1"></i>Thời lượng: <?= $course['duration_weeks'] ?? 'Unknown' ?> tuần</p>
-        <p class="mb-0" style="font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+        <p class="mb-0" style="font-size: 12px; display: -webkit-box; ; -webkit-box-orient: vertical; overflow: hidden;">
             <?= htmlspecialchars($course['description']) ?>
         </p>
     </div>

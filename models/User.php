@@ -130,5 +130,20 @@ class User {
         $stmt->bindParam(':id', $id);
         return $stmt->execute();
     }
+    // --- HÀM THỐNG KÊ MỚI ---
+    // Đếm tổng số người dùng
+    public function countTotalUsers() {
+        $query = "SELECT COUNT(id) FROM " . $this->table;
+        // fetchColumn lấy giá trị đầu tiên của kết quả query
+        return $this->conn->query($query)->fetchColumn();
+    }
+    // Đếm số lượng theo vai trò (0:HV, 1:GV, 2:Admin)
+    public function countByRole($role) {
+        $query = "SELECT COUNT(id) FROM " . $this->table . " WHERE role = :role";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':role', $role);
+        $stmt->execute();
+        return $stmt->fetchColumn();
+    }
 }
 ?>

@@ -56,7 +56,7 @@
                                     <li><a class="dropdown-item" href="index.php?controller=admin&action=dashboard"><i class="fas fa-shield-alt me-2"></i>Bảng điều khiển Admin</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                 <?php endif; ?>
-                                <li><a class="dropdown-item" href="index.php?controller=auth&action=profile"><i class="fas fa-user me-2"></i>Hồ sơ cá nhân</a></li>
+                                
                                 <li><a class="dropdown-item text-danger" href="index.php?controller=auth&action=logout"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
                             </ul>
                         </li>
@@ -64,9 +64,7 @@
                         <li class="nav-item">
                             <a class="nav-link" href="index.php?controller=auth&action=login">Đăng nhập</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link btn btn-light text-primary ms-2" href="index.php?controller=auth&action=register">Đăng ký</a>
-                        </li>
+                        
                     <?php endif; ?>
                 </ul>
             </div>

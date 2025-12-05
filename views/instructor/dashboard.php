@@ -1,5 +1,18 @@
 <?php include 'views/layouts/header.php'; ?>
 
+<?php
+// --- TÍNH TOÁN SỐ LIỆU THỐNG KÊ (Mới thêm) ---
+$total_courses = count($courses);
+$total_students = 0;
+$total_revenue = 0;
+
+foreach ($courses as $c) {
+    $total_students += $c['student_count'];
+    // Giả sử doanh thu = giá * số học viên (tính sơ bộ)
+    $total_revenue += ($c['price'] * $c['student_count']); 
+}
+?>
+
 <style>
     .instructor-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -15,6 +28,7 @@
         padding: 25px;
         box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
+        height: 100%; /* Đều chiều cao */
     }
 
     .stats-card:hover {
@@ -95,10 +109,6 @@
         margin-bottom: 5px;
     }
 
-    .course-level {
-        font-size: 12px;
-    }
-
     .course-description {
         color: #999;
         font-size: 13px;
@@ -117,6 +127,7 @@
         justify-content: center;
     }
 
+    /* Style cho các nút hành động */
     .action-btn {
         padding: 6px 12px;
         border-radius: 6px;
@@ -127,58 +138,37 @@
         display: inline-flex;
         align-items: center;
         gap: 5px;
+        text-decoration: none;
     }
 
-    .btn-view-students {
+    /* Nút Quản lý bài học */
+    .btn-manage-lessons {
         background: #e3f2fd;
-        color: #1976d2;
+        color: #0d47a1;
     }
-
-    .btn-view-students:hover {
+    .btn-manage-lessons:hover {
         background: #1976d2;
         color: white;
     }
 
-    .btn-manage-lessons {
-        background: #f3e5f5;
-        color: #7b1fa2;
-    }
-
-    .btn-manage-lessons:hover {
-        background: #7b1fa2;
-        color: white;
-    }
-
+    /* Nút Sửa */
     .btn-edit {
         background: #fff3e0;
         color: #e65100;
     }
-
     .btn-edit:hover {
         background: #e65100;
         color: white;
     }
 
+    /* Nút Xóa */
     .btn-delete {
         background: #ffebee;
         color: #c62828;
     }
-
     .btn-delete:hover {
         background: #c62828;
         color: white;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #999;
-    }
-
-    .empty-state i {
-        font-size: 48px;
-        margin-bottom: 20px;
-        opacity: 0.5;
     }
 
     .pagination {
@@ -205,383 +195,198 @@
     }
 </style>
 
-<!-- Instructor Header -->
 <div class="instructor-header">
-    <div class="row align-items-center">
-        <div class="col-md-8">
-            <h1 class="mb-2"><i class="fas fa-chalkboard-teacher me-3"></i>Bảng điều khiển Giảng viên</h1>
-            <p class="mb-0 opacity-75">Quản lý khóa học, bài giảng và theo dõi học viên của bạn</p>
-        </div>
-        <div class="col-md-4 text-md-end">
-            <a href="index.php?controller=instructor&action=create" class="btn btn-create">
-                <i class="fas fa-plus-circle me-2"></i>Tạo khóa học mới
-            </a>
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2"><i class="fas fa-chalkboard-teacher me-3"></i>Bảng điều khiển Giảng viên</h1>
+                <p class="mb-0 opacity-75">Quản lý khóa học, bài giảng và theo dõi học viên của bạn</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="index.php?controller=instructor&action=create" class="btn btn-create">
+                    <i class="fas fa-plus-circle me-2"></i>Tạo khóa học mới
+                </a>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Statistics -->
-<div class="row mb-4">
-    <div class="col-md-4 mb-3 mb-md-0">
-        <div class="stats-card">
-            <div class="icon text-primary">
-                <i class="fas fa-book"></i>
+<div class="container mb-5">
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="stats-card">
+                <div class="icon text-primary">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h3><?php echo $total_courses; ?></h3>
+                <p>Tổng số khóa học</p>
             </div>
-            <h3>8</h3>
-            <p>Tổng số khóa học</p>
         </div>
-    </div>
-    <div class="col-md-4 mb-3 mb-md-0">
-        <div class="stats-card">
-            <div class="icon text-success">
-                <i class="fas fa-users"></i>
-            </div>
-            <h3>156</h3>
-            <p>Tổng học viên đăng ký</p>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3 mb-md-0">
-        <div class="stats-card">
-            <div class="icon text-warning">
-                <i class="fas fa-money-bill"></i>
-            </div>
-            <h3>18.5M</h3>
-            <p>Doanh thu ước tính</p>
-        </div>
-    </div>
-</div>
 
-<!-- Courses Management Table -->
-<div class="table-container">
-    <!-- Header -->
-    <div class="table-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-list me-2"></i>Danh sách khóa học của tôi</h5>
-        <span class="badge bg-light text-dark">8 khóa học</span>
-    </div>
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="stats-card">
+                <div class="icon text-success">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3><?php echo $total_students; ?></h3>
+                <p>Tổng lượt học viên</p>
+            </div>
+        </div>
 
-    <!-- Filters -->
-    <div class="filter-section" style="margin: 0; border-radius: 0; box-shadow: none; border-bottom: 1px solid #e0e0e0;">
-        <div class="row gap-2">
-            <div class="col-md-4">
-                <input type="text" class="form-control" placeholder="Tìm kiếm tên khóa học...">
-            </div>
-            <div class="col-md-4">
-                <select class="form-select">
-                    <option>Tất cả trạng thái</option>
-                    <option>Đang bán</option>
-                    <option>Hết hạn</option>
-                    <option>Bản nháp</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <select class="form-select">
-                    <option>Sắp xếp</option>
-                    <option>Mới nhất</option>
-                    <option>Cũ nhất</option>
-                    <option>Giá cao đến thấp</option>
-                </select>
+        <div class="col-md-4 mb-3 mb-md-0">
+            <div class="stats-card">
+                <div class="icon text-warning">
+                    <i class="fas fa-money-bill"></i>
+                </div>
+                <h3><?php echo number_format($total_revenue); ?> đ</h3>
+                <p>Doanh thu ước tính</p>
             </div>
         </div>
     </div>
 
-    <!-- Table -->
-    <div class="table-responsive">
+    <div class="table-container">
+        <div class="table-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Danh sách khóa học của tôi</h5>
+            <span class="badge bg-light text-dark"><?php echo $total_courses; ?> khóa học</span>
+        </div>
+
+        <div class="filter-section" style="margin: 0; border-radius: 0; box-shadow: none; border-bottom: 1px solid #e0e0e0;">
+            <div class="row gap-2">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" placeholder="Tìm kiếm tên khóa học...">
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select">
+                        <option>Tất cả trạng thái</option>
+                        <option>Đang bán</option>
+                        <option>Hết hạn</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select">
+                        <option>Sắp xếp</option>
+                        <option>Mới nhất</option>
+                        <option>Cũ nhất</option>
+                        <option>Giá cao đến thấp</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
         <table class="table table-hover mb-0">
             <thead class="bg-light">
                 <tr>
                     <th width="5%" class="text-center">#</th>
-                    <th width="25%">Tên khóa học</th>
-                    <th width="30%">Mô tả</th>
+                    <th width="20%">Tên khóa học</th>
+                    <th width="10%" class="text-center">Trạng thái</th>
+                    <th width="15%">Mô tả</th>
                     <th width="10%" class="text-center">Giá</th>
-                    <th width="12%" class="text-center">Học viên</th>
-                    <th width="18%" class="text-center">Hành động</th>
+                    <th width="10%" class="text-center">Học viên</th>
+                    <th width="30%" class="text-center">Hành động</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- Course 1 -->
-                <tr class="course-row">
-                    <td class="text-center fw-bold">1</td>
-                    <td>
-                        <div class="course-name">Lập trình PHP MVC nâng cao</div>
-                        <span class="badge badge-level bg-warning text-dark">Nâng cao</span>
-                    </td>
-                    <td>
-                        <p class="course-description">Khóa học chuyên sâu về mô hình MVC, bảo mật và tối ưu hóa website...</p>
-                    </td>
-                    <td class="text-center">
-                        <span class="course-price">1,200,000 đ</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge bg-success">25 người</span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view-students" title="Xem danh sách học viên">
-                                <i class="fas fa-users"></i> DS HV
-                            </button>
-                            <button class="action-btn btn-manage-lessons" title="Quản lý bài giảng">
-                                <i class="fas fa-book"></i> Bài
-                            </button>
-                            <button class="action-btn btn-edit" title="Chỉnh sửa">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn btn-delete" onclick="return confirm('Bạn chắc chắn muốn xóa?')" title="Xóa">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+                <?php if (empty($courses)): ?>
+                    <tr><td colspan="7" class="text-center py-5">Bạn chưa có khóa học nào.</td></tr>
+                <?php else: ?>
+                    <?php foreach ($courses as $index => $course): 
+                        // 1. Logic màu Level
+                        $badge_class = 'bg-secondary';
+                        if ($course['level'] == 'Beginner') $badge_class = 'bg-success'; 
+                        elseif ($course['level'] == 'Intermediate') $badge_class = 'bg-warning text-dark'; 
+                        elseif ($course['level'] == 'Advanced') $badge_class = 'bg-danger'; 
+                        
+                        // 2. Logic màu Trạng thái (Status) - MỚI
+                        $status_label = 'Chờ duyệt';
+                        $status_badge = 'bg-secondary';
+                        
+                        // Kiểm tra nếu database chưa có cột status (hoặc null) thì coi như là pending
+                        $status = isset($course['status']) ? $course['status'] : 'pending';
 
-                <!-- Course 2 -->
-                <tr class="course-row">
-                    <td class="text-center fw-bold">2</td>
-                    <td>
-                        <div class="course-name">JavaScript Nâng cao</div>
-                        <span class="badge badge-level bg-info text-white">Trung bình</span>
-                    </td>
-                    <td>
-                        <p class="course-description">Học async/await, Promises, DOM API, và các pattern JavaScript hiện đại...</p>
-                    </td>
-                    <td class="text-center">
-                        <span class="course-price">950,000 đ</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge bg-success">18 người</span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view-students" title="Xem danh sách học viên">
-                                <i class="fas fa-users"></i> DS HV
-                            </button>
-                            <button class="action-btn btn-manage-lessons" title="Quản lý bài giảng">
-                                <i class="fas fa-book"></i> Bài
-                            </button>
-                            <button class="action-btn btn-edit" title="Chỉnh sửa">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn btn-delete" onclick="return confirm('Bạn chắc chắn muốn xóa?')" title="Xóa">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+                        if ($status == 'approved') {
+                            $status_label = 'Đã duyệt';
+                            $status_badge = 'bg-success'; // Xanh lá
+                        } elseif ($status == 'rejected') {
+                            $status_label = 'Từ chối';
+                            $status_badge = 'bg-danger'; // Đỏ
+                        } else {
+                            // pending
+                            $status_label = 'Chờ duyệt';
+                            $status_badge = 'bg-warning text-dark'; // Vàng
+                        }
+                    ?>
+                    <tr class="course-row">
+                        <td class="text-center fw-bold"><?php echo $index + 1; ?></td>
+                        <td>
+                            <div class="course-name"><?php echo htmlspecialchars($course['title']); ?></div>
+                            <span class="badge badge-level <?php echo $badge_class; ?>">
+                                <?php echo $course['level']; ?>
+                            </span>
+                        </td>
+                        
+                        <td class="text-center">
+                            <span class="badge rounded-pill <?php echo $status_badge; ?>">
+                                <?php echo $status_label; ?>
+                            </span>
+                        </td>
 
-                <!-- Course 3 -->
-                <tr class="course-row">
-                    <td class="text-center fw-bold">3</td>
-                    <td>
-                        <div class="course-name">React.js Từ Cơ Bản Đến Nâng Cao</div>
-                        <span class="badge badge-level bg-warning text-dark">Nâng cao</span>
-                    </td>
-                    <td>
-                        <p class="course-description">Khóa học React.js tổng hợp: component, hooks, state management, routing...</p>
-                    </td>
-                    <td class="text-center">
-                        <span class="course-price">1,500,000 đ</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge bg-success">42 người</span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view-students" title="Xem danh sách học viên">
-                                <i class="fas fa-users"></i> DS HV
-                            </button>
-                            <button class="action-btn btn-manage-lessons" title="Quản lý bài giảng">
-                                <i class="fas fa-book"></i> Bài
-                            </button>
-                            <button class="action-btn btn-edit" title="Chỉnh sửa">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn btn-delete" onclick="return confirm('Bạn chắc chắn muốn xóa?')" title="Xóa">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+                        <td>
+                            <p class="course-description">
+                                <?php echo substr(htmlspecialchars($course['description']), 0, 40) . '...'; ?>
+                            </p>
+                        </td>
+                        <td class="text-center">
+                            <span class="course-price"><?php echo number_format($course['price']); ?> đ</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-success"><?php echo $course['student_count']; ?> người</span>
+                        </td>
+                        <td>
+                            <div class="action-buttons" style="white-space: nowrap;">
+                                <a href="index.php?controller=lesson&action=manage&course_id=<?php echo $course['id']; ?>" 
+                                   class="action-btn btn-manage-lessons" 
+                                   data-bs-toggle="tooltip" title="Quản lý bài giảng">
+                                    <i class="fas fa-book"></i>
+                                </a>
 
-                <!-- Course 4 -->
-                <tr class="course-row">
-                    <td class="text-center fw-bold">4</td>
-                    <td>
-                        <div class="course-name">Python cho Lập Trình Viên</div>
-                        <span class="badge badge-level bg-success text-white">Cơ bản</span>
-                    </td>
-                    <td>
-                        <p class="course-description">Python cho người mới bắt đầu: syntax, data structures, OOP...</p>
-                    </td>
-                    <td class="text-center">
-                        <span class="course-price">750,000 đ</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge bg-success">35 người</span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view-students" title="Xem danh sách học viên">
-                                <i class="fas fa-users"></i> DS HV
-                            </button>
-                            <button class="action-btn btn-manage-lessons" title="Quản lý bài giảng">
-                                <i class="fas fa-book"></i> Bài
-                            </button>
-                            <button class="action-btn btn-edit" title="Chỉnh sửa">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn btn-delete" onclick="return confirm('Bạn chắc chắn muốn xóa?')" title="Xóa">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+                                <a href="index.php?controller=instructor&action=students&course_id=<?php echo $course['id']; ?>" 
+                                   class="action-btn btn-view-students" 
+                                   style="background: #e8f5e9; color: #2e7d32;"
+                                   data-bs-toggle="tooltip" title="Danh sách học viên">
+                                    <i class="fas fa-user-graduate"></i>
+                                </a>
 
-                <!-- Course 5 -->
-                <tr class="course-row">
-                    <td class="text-center fw-bold">5</td>
-                    <td>
-                        <div class="course-name">Node.js API Development</div>
-                        <span class="badge badge-level bg-info text-white">Trung bình</span>
-                    </td>
-                    <td>
-                        <p class="course-description">Xây dựng RESTful API với Node.js, Express, MongoDB...</p>
-                    </td>
-                    <td class="text-center">
-                        <span class="course-price">1,050,000 đ</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge bg-success">20 người</span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view-students" title="Xem danh sách học viên">
-                                <i class="fas fa-users"></i> DS HV
-                            </button>
-                            <button class="action-btn btn-manage-lessons" title="Quản lý bài giảng">
-                                <i class="fas fa-book"></i> Bài
-                            </button>
-                            <button class="action-btn btn-edit" title="Chỉnh sửa">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn btn-delete" onclick="return confirm('Bạn chắc chắn muốn xóa?')" title="Xóa">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+                                <a href="index.php?controller=instructor&action=edit&id=<?php echo $course['id']; ?>" 
+                                   class="action-btn btn-edit" 
+                                   data-bs-toggle="tooltip" title="Chỉnh sửa">
+                                    <i class="fas fa-edit"></i>
+                                </a>
 
-                <!-- Course 6 -->
-                <tr class="course-row">
-                    <td class="text-center fw-bold">6</td>
-                    <td>
-                        <div class="course-name">Vue.js Master Class</div>
-                        <span class="badge badge-level bg-warning text-dark">Nâng cao</span>
-                    </td>
-                    <td>
-                        <p class="course-description">Thành thạo Vue.js 3: Composition API, Pinia, Router...</p>
-                    </td>
-                    <td class="text-center">
-                        <span class="course-price">920,000 đ</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge bg-success">16 người</span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view-students" title="Xem danh sách học viên">
-                                <i class="fas fa-users"></i> DS HV
-                            </button>
-                            <button class="action-btn btn-manage-lessons" title="Quản lý bài giảng">
-                                <i class="fas fa-book"></i> Bài
-                            </button>
-                            <button class="action-btn btn-edit" title="Chỉnh sửa">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn btn-delete" onclick="return confirm('Bạn chắc chắn muốn xóa?')" title="Xóa">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-
-                <!-- Course 7 -->
-                <tr class="course-row">
-                    <td class="text-center fw-bold">7</td>
-                    <td>
-                        <div class="course-name">Thiết Kế Web Responsive</div>
-                        <span class="badge badge-level bg-success text-white">Cơ bản</span>
-                    </td>
-                    <td>
-                        <p class="course-description">Học HTML, CSS, Bootstrap để tạo web responsive đẹp mắt...</p>
-                    </td>
-                    <td class="text-center">
-                        <span class="course-price">650,000 đ</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge bg-success">28 người</span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view-students" title="Xem danh sách học viên">
-                                <i class="fas fa-users"></i> DS HV
-                            </button>
-                            <button class="action-btn btn-manage-lessons" title="Quản lý bài giảng">
-                                <i class="fas fa-book"></i> Bài
-                            </button>
-                            <button class="action-btn btn-edit" title="Chỉnh sửa">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn btn-delete" onclick="return confirm('Bạn chắc chắn muốn xóa?')" title="Xóa">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-
-                <!-- Course 8 -->
-                <tr class="course-row">
-                    <td class="text-center fw-bold">8</td>
-                    <td>
-                        <div class="course-name">Digital Marketing Toàn Diện</div>
-                        <span class="badge badge-level bg-info text-white">Trung bình</span>
-                    </td>
-                    <td>
-                        <p class="course-description">SEO, SEM, Social Media Marketing, Email Marketing...</p>
-                    </td>
-                    <td class="text-center">
-                        <span class="course-price">580,000 đ</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge bg-warning text-dark">12 người</span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="action-btn btn-view-students" title="Xem danh sách học viên">
-                                <i class="fas fa-users"></i> DS HV
-                            </button>
-                            <button class="action-btn btn-manage-lessons" title="Quản lý bài giảng">
-                                <i class="fas fa-book"></i> Bài
-                            </button>
-                            <button class="action-btn btn-edit" title="Chỉnh sửa">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn btn-delete" onclick="return confirm('Bạn chắc chắn muốn xóa?')" title="Xóa">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+                                <a href="index.php?controller=instructor&action=delete&id=<?php echo $course['id']; ?>" 
+                                   class="action-btn btn-delete" 
+                                   onclick="return confirm('Bạn chắc chắn muốn xóa khóa học này?')" 
+                                   data-bs-toggle="tooltip" title="Xóa">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
 
-    <!-- Pagination -->
-    <nav class="pagination" aria-label="Page navigation">
-        <ul class="pagination justify-content-center mb-0">
-            <li class="page-item disabled"><a class="page-link" href="#">Trước</a></li>
-            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">Sau</a></li>
-        </ul>
-    </nav>
+        <nav class="pagination" aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+                <li class="page-item disabled"><a class="page-link" href="#">Trước</a></li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">Sau</a></li>
+            </ul>
+        </nav>
+    </div>
 </div>
 
 <?php include 'views/layouts/footer.php'; ?>

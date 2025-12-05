@@ -9,7 +9,7 @@
                 </span>
                 <h1 class="display-5 fw-bold mb-3"><?= htmlspecialchars($course['title']) ?></h1>
                 
-                <p class="lead mb-4" style="opacity: 0.9; font-size: 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                <p class="lead mb-4" style="opacity: 0.9; font-size: 16px; display: -webkit-box; ; -webkit-box-orient: vertical; overflow: hidden;">
                     <?= htmlspecialchars($course['description']) ?>
                 </p>
                 
@@ -88,8 +88,8 @@
         <div class="col-lg-4">
             <div class="card shadow border-0 mb-4" style="position: sticky; top: 100px; z-index: 10;">
                 <div style="position: relative;">
-                    <img src="<?= !empty($course['image']) ? 'upload/courses/' . $course['image'] : 'https://via.placeholder.com/600x400?text=Course' ?>" 
-                         class="card-img-top" alt="Course Img" style="height: 200px; object-fit: cover;">
+                    <img src="<?= !empty($course['image']) ? 'assets/uploads/courses/' . $course['image'] : 'https://via.placeholder.com/600x400?text=Course' ?>" 
+     class="card-img-top" alt="Course Img" style="height: 200px; object-fit: cover;">
                 </div>
 
                 <div class="card-body p-4">
@@ -98,11 +98,33 @@
                     </h2>
                     
                     <div class="d-grid gap-2 mb-4">
-                        <a href="index.php?controller=course&action=register&id=<?= $course['id'] ?>" 
-                           class="btn btn-primary btn-lg fw-bold shadow-sm"
-                           onclick="return confirm('Bạn có chắc chắn muốn đăng ký khóa học này không?');">
-                            Đăng ký học ngay
-                        </a>
+                        <?php 
+                        // Kiểm tra session
+                        $role = isset($_SESSION['role']) ? $_SESSION['role'] : -1; // -1 là chưa đăng nhập
+                        ?>
+
+                        <?php if ($role == -1): ?>
+                            <a href="index.php?controller=auth&action=login" class="btn btn-primary btn-lg fw-bold shadow-sm">
+                                Đăng nhập để đăng ký
+                            </a>
+
+                        <?php elseif ($role == 0): ?>
+                            <a href="index.php?controller=course&action=register&id=<?= $course['id'] ?>" 
+                               class="btn btn-primary btn-lg fw-bold shadow-sm"
+                               onclick="return confirm('Bạn có chắc chắn muốn đăng ký khóa học này không?');">
+                                Đăng ký học ngay
+                            </a>
+
+                        <?php elseif ($role == 1): ?>
+                            <div class="alert alert-warning text-center mb-0" role="alert">
+                                <i class="fas fa-user-tie me-2"></i>Tài khoản <strong>Giảng viên</strong> không thể đăng ký học.
+                            </div>
+
+                        <?php elseif ($role == 2): ?>
+                            <div class="alert alert-info text-center mb-0" role="alert">
+                                <i class="fas fa-user-shield me-2"></i>Bạn đang xem với quyền <strong>Quản trị viên</strong>.
+                            </div>
+                        <?php endif; ?>
                     </div>
 
                     <ul class="list-group list-group-flush small text-secondary">

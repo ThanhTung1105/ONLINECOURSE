@@ -63,6 +63,13 @@ class CourseController {
             header("Location: index.php?controller=auth&action=login");
             exit;
         }
+        if (isset($_SESSION['role']) && $_SESSION['role'] != 0) {
+        echo "<script>
+            alert('Chức năng này chỉ dành cho Học viên!');
+            window.location.href = 'index.php';
+        </script>";
+        exit;
+    }
 
         if (isset($_GET['id'])) {
             $course_id = $_GET['id'];

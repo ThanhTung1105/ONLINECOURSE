@@ -1,6 +1,8 @@
 <?php
 require_once 'models/User.php';
-
+require_once 'models/Category.php';
+require_once 'models/Course.php';
+require_once 'models/Enrollment.php';
 class AdminController {
     public function dashboard() {
         // Kiểm tra xem user có là admin không (role = 2)
@@ -11,7 +13,21 @@ class AdminController {
         
         // Lấy tab hiện tại
         $currentTab = isset($_GET['tab']) ? $_GET['tab'] : 'overview';
-        
+        $database = new Database();
+        $db = $database->connect();
+        if ($currentTab == 'overview') {
+            // Khởi tạo Models
+            $userModel = new User($db);
+            $courseModel = new Course($db);
+            $enrollmentModel = new Enrollment($db); // Dùng cho thống kê doanh thu
+
+            // Tính toán và lưu vào mảng $stats
+            $stats['totalUsers'] = $userModel->countTotalUsers();
+            $stats['totalCourses'] = $courseModel->countCoursesByStatus('approved');
+            $stats['pendingCourses'] = $courseModel->countCoursesByStatus('pending');
+            $stats['totalRevenue'] = $enrollmentModel->calculateTotalRevenue();
+            $stats['totalEnrollments'] = $enrollmentModel->countTotalEnrollments();
+        }
         // Nếu là tab users, lấy dữ liệu user
         if ($currentTab == 'users') {
             $database = new Database();
@@ -19,7 +35,14 @@ class AdminController {
             $userModel = new User($db);
             $allUsers = $userModel->getAll();
         }
-        
+        elseif ($currentTab == 'categories') { // <--- Logic mới cho Category
+            $categoryModel = new Category($db);
+            $allCategories = $categoryModel->getAll();
+        }
+        elseif ($currentTab == 'courses') {
+            $courseModel = new Course($db); // Đảm bảo đã require 'models/Course.php' ở đầu file
+            $pendingCourses = $courseModel->getPendingCourses();
+        }
         include 'views/admin/dashboard.php';
     }
 
@@ -256,5 +279,108 @@ class AdminController {
         header('Location: index.php?controller=admin&action=dashboard&tab=courses');
         exit;
     }
+    public function addCategory() {
+        // Kiểm tra quyền Admin
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 2) {
+            header('Location: index.php?controller=auth&action=login');
+            exit;
+        }
+        // Gọi view hiển thị form
+        include 'views/admin/add_category.php';
+    }
+    public function addCategoryPost() {
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 2) exit;
+
+        $name = $_POST['name'];
+        $description = $_POST['description'];
+
+        if (empty($name)) {
+            $error = "Tên danh mục không được để trống";
+            include 'views/admin/add_category.php';
+            return;
+        }
+
+        $db = (new Database())->connect();
+        $categoryModel = new Category($db);
+
+        if ($categoryModel->create($name, $description)) {
+            header("Location: index.php?controller=admin&action=dashboard&tab=categories");
+        } else {
+            $error = "Lỗi khi tạo danh mục";
+            include 'views/admin/add_category.php';
+        }
+    }
+
+    // 3. Hiển thị form sửa danh mục
+    public function editCategory() {
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 2) exit;
+        
+        $id = $_GET['id'];
+        $db = (new Database())->connect();
+        $categoryModel = new Category($db);
+        $category = $categoryModel->getById($id);
+
+        include 'views/admin/edit_category.php';
+    }
+
+    // 4. Xử lý sửa danh mục
+    public function editCategoryPost() {
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 2) exit;
+
+        $id = $_POST['id'];
+        $name = $_POST['name'];
+        $description = $_POST['description'];
+
+        $db = (new Database())->connect();
+        $categoryModel = new Category($db);
+
+        if ($categoryModel->update($id, $name, $description)) {
+            header("Location: index.php?controller=admin&action=dashboard&tab=categories");
+        } else {
+            echo "Lỗi update";
+        }
+    }
+
+    // 5. Xóa danh mục
+    public function deleteCategory() {
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 2) exit;
+
+        $id = $_GET['id'];
+        $db = (new Database())->connect();
+        $categoryModel = new Category($db);
+        
+        $categoryModel->delete($id);
+        header("Location: index.php?controller=admin&action=dashboard&tab=categories");
+    }
+    // --- PHÊ DUYỆT KHÓA HỌC ---
+
+    // Duyệt khóa học
+    public function approveCourse() {
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 2) exit;
+
+        $id = $_GET['id'];
+        $database = new Database();
+        $db = $database->connect();
+        $courseModel = new Course($db);
+
+        $courseModel->updateStatus($id, 'approved');
+        header("Location: index.php?controller=admin&action=dashboard&tab=courses");
+    }
+
+    // Từ chối khóa học
+    public function rejectCourse() {
+        if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 2) exit;
+
+        $id = $_GET['id'];
+        $database = new Database();
+        $db = $database->connect();
+        $courseModel = new Course($db);
+
+        $courseModel->updateStatus($id, 'rejected'); // Hoặc xóa luôn nếu muốn
+        header("Location: index.php?controller=admin&action=dashboard&tab=courses");
+    }
+
+    // --- Helper function để giữ code cũ của bạn gọn gàng ---
+    
 }
 ?>

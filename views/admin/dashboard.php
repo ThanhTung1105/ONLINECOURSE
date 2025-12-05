@@ -371,34 +371,48 @@ if ($currentTab == 'users') {
                     <div class="row mb-4">
                         <div class="col-md-3 mb-3">
                             <div class="stats-card">
-                                <i class="fas fa-users"></i>
-                                <h3>245</h3>
+                                <i class="fas fa-users" style="color: #667eea;"></i>
+                                <h3><?php echo number_format($stats['totalUsers']); ?></h3>
                                 <p>Tổng Người Dùng</p>
                             </div>
                         </div>
+                        
                         <div class="col-md-3 mb-3">
                             <div class="stats-card">
-                                <i class="fas fa-book"></i>
-                                <h3>42</h3>
-                                <p>Tổng Khóa Học</p>
+                                <i class="fas fa-book" style="color: #28a745;"></i>
+                                <h3><?php echo number_format($stats['totalCourses']); ?></h3>
+                                <p>Khóa Học Đã Duyệt</p>
                             </div>
                         </div>
+                        
                         <div class="col-md-3 mb-3">
                             <div class="stats-card">
-                                <i class="fas fa-hourglass-half"></i>
-                                <h3>5</h3>
+                                <i class="fas fa-hourglass-half" style="color: #ffc107;"></i>
+                                <h3><?php echo number_format($stats['pendingCourses']); ?></h3>
                                 <p>Chờ Phê Duyệt</p>
                             </div>
                         </div>
+                        
                         <div class="col-md-3 mb-3">
                             <div class="stats-card">
-                                <i class="fas fa-chart-line"></i>
-                                <h3>1.2M</h3>
+                                <i class="fas fa-chart-line" style="color: #dc3545;"></i>
+                                <h3><?php echo number_format($stats['totalRevenue']); ?> đ</h3>
                                 <p>Tổng Doanh Thu</p>
                             </div>
                         </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="stats-card">
+                                <i class="fas fa-user-check" style="color: #17a2b8;"></i>
+                                <h3><?php echo number_format($stats['totalEnrollments']); ?></h3>
+                                <p>Tổng Lượt Đăng Ký</p>
+                            </div>
+                        </div>
                     </div>
+                    
+                    
                 </div>
+                
 
                 <!-- USERS TAB -->
                 <?php elseif ($currentTab == 'users'): ?>
@@ -486,14 +500,51 @@ if ($currentTab == 'users') {
                 <div class="tab-content">
                     <div class="tab-header">
                         <h5><i class="fas fa-list"></i> Danh Mục Khóa Học</h5>
-                        <button class="btn-add">
+                        <a href="index.php?controller=admin&action=addCategory" class="btn-add">
                             <i class="fas fa-plus"></i> Thêm Danh Mục
-                        </button>
+                        </a>
                     </div>
-                    <div class="empty-state">
-                        <i class="fas fa-list"></i>
-                        <h5>Tính năng Danh Mục đang phát triển</h5>
-                        <p>Vui lòng quay lại sau</p>
+
+                    <div class="table-wrapper">
+                        <?php if (!empty($allCategories)): ?>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th width="10%">ID</th>
+                                        <th width="30%">Tên Danh Mục</th>
+                                        <th width="40%">Mô Tả</th>
+                                        <th width="20%">Thao Tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($allCategories as $cat): ?>
+                                    <tr>
+                                        <td>#<?php echo $cat['id']; ?></td>
+                                        <td class="fw-bold text-primary"><?php echo htmlspecialchars($cat['name']); ?></td>
+                                        <td><?php echo htmlspecialchars($cat['description']); ?></td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="index.php?controller=admin&action=editCategory&id=<?php echo $cat['id']; ?>" 
+                                                   class="btn-sm btn-edit">
+                                                    <i class="fas fa-edit"></i> Sửa
+                                                </a>
+                                                <a href="index.php?controller=admin&action=deleteCategory&id=<?php echo $cat['id']; ?>" 
+                                                   class="btn-sm btn-delete"
+                                                   onclick="return confirm('Bạn có chắc chắn muốn xóa danh mục này?');">
+                                                    <i class="fas fa-trash"></i> Xóa
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php else: ?>
+                            <div class="empty-state">
+                                <i class="fas fa-folder-open"></i>
+                                <h5>Chưa có danh mục nào</h5>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -501,12 +552,67 @@ if ($currentTab == 'users') {
                 <?php elseif ($currentTab == 'courses'): ?>
                 <div class="tab-content">
                     <div class="tab-header">
-                        <h5><i class="fas fa-book"></i> Khóa Học Chờ Phê Duyệt</h5>
+                        <h5><i class="fas fa-check-circle"></i> Phê Duyệt Khóa Học</h5>
+                        <span class="badge bg-warning text-dark">
+                            <?php echo !empty($pendingCourses) ? count($pendingCourses) : 0; ?> chờ duyệt
+                        </span>
                     </div>
-                    <div class="empty-state">
-                        <i class="fas fa-book"></i>
-                        <h5>Tính năng Phê Duyệt Khóa Học đang phát triển</h5>
-                        <p>Vui lòng quay lại sau</p>
+
+                    <div class="table-wrapper">
+                        <?php if (!empty($pendingCourses)): ?>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Khóa Học</th>
+                                        <th>Giảng Viên</th>
+                                        <th>Giá</th>
+                                        <th>Ngày Tạo</th>
+                                        <th width="20%">Thao Tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($pendingCourses as $course): ?>
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold text-primary"><?php echo htmlspecialchars($course['title']); ?></div>
+                                            <small class="text-muted"><?php echo htmlspecialchars($course['category_name']); ?></small>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold"><?php echo htmlspecialchars($course['instructor_name']); ?></div>
+                                        </td>
+                                        <td><?php echo number_format($course['price']); ?> đ</td>
+                                        <td><?php echo date('d/m/Y', strtotime($course['created_at'])); ?></td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="index.php?controller=course&action=detail&id=<?php echo $course['id']; ?>" 
+                                                   target="_blank" class="btn-sm btn-info text-white" title="Xem nội dung">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+
+                                                <a href="index.php?controller=admin&action=approveCourse&id=<?php echo $course['id']; ?>" 
+                                                   class="btn-sm btn-success" 
+                                                   onclick="return confirm('Xác nhận duyệt khóa học này?');" title="Duyệt">
+                                                    <i class="fas fa-check"></i>
+                                                </a>
+
+                                                <a href="index.php?controller=admin&action=rejectCourse&id=<?php echo $course['id']; ?>" 
+                                                   class="btn-sm btn-delete" 
+                                                   onclick="return confirm('Từ chối khóa học này?');" title="Từ chối">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php else: ?>
+                            <div class="empty-state">
+                                <i class="fas fa-check-double text-success"></i>
+                                <h5>Tuyệt vời!</h5>
+                                <p>Không có khóa học nào đang chờ duyệt.</p>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <?php endif; ?>

@@ -209,13 +209,13 @@ if(isset($_SESSION['user_id'])) {
         <form method="POST" action="index.php?controller=auth&action=registerPost">
             <div class="form-group">
                 <label for="fullname"><i class="fas fa-user"></i> Họ và Tên</label>
-                <input type="text" id="fullname" name="fullname" class="form-control" 
+                <input type="text" id="fullname" name="fullname" class="form-control" autocomplete="off"
                        placeholder="Nhập họ và tên" value="<?php echo isset($_POST['fullname']) ? htmlspecialchars($_POST['fullname']) : ''; ?>" required>
             </div>
 
             <div class="form-group">
                 <label for="username"><i class="fas fa-at"></i> Tên Đăng Nhập</label>
-                <input type="text" id="username" name="username" class="form-control" 
+                <input type="text" id="username" name="username" class="form-control" autocomplete="off"
                        placeholder="Nhập tên đăng nhập (tối thiểu 3 ký tự)" 
                        value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>" required>
             </div>
@@ -230,7 +230,7 @@ if(isset($_SESSION['user_id'])) {
             <div class="password-section">
                 <div class="form-group">
                     <label for="password"><i class="fas fa-lock"></i> Mật Khẩu</label>
-                    <input type="password" id="password" name="password" class="form-control" 
+                    <input type="password" id="password" name="password" class="form-control" autocomplete="new-password"
                            placeholder="Tối thiểu 6 ký tự" required>
                 </div>
 

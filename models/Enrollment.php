@@ -113,6 +113,50 @@ class Enrollment {
 
         return $percent;
     }
+    public function getStudentsByInstructor($instructor_id) {
+        $query = "SELECT e.*, u.fullname, u.email, c.title as course_title, c.price
+                  FROM enrollments e
+                  JOIN users u ON e.student_id = u.id
+                  JOIN courses c ON e.course_id = c.id
+                  WHERE c.instructor_id = :instructor_id
+                  ORDER BY e.enrolled_date DESC";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':instructor_id', $instructor_id);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    // Thêm hàm này vào trong class Enrollment
+    public function getStudentsByCourseId($course_id) {
+        $query = "SELECT e.*, u.fullname, u.email, c.title as course_title
+                  FROM " . $this->table . " e
+                  JOIN users u ON e.student_id = u.id
+                  JOIN courses c ON e.course_id = c.id
+                  WHERE e.course_id = :course_id
+                  ORDER BY e.enrolled_date DESC";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':course_id', $course_id);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    // --- HÀM THỐNG KÊ MỚI ---
+    // Đếm tổng số lượt đăng ký (dùng cho thống kê tổng quan)
+    public function countTotalEnrollments() {
+        $query = "SELECT COUNT(id) FROM " . $this->table;
+        return $this->conn->query($query)->fetchColumn();
+    }
+    
+    // Tính tổng doanh thu (giá khóa học * số lượt đăng ký)
+    public function calculateTotalRevenue() {
+        // Tham chiếu bảng courses để lấy giá
+        $query = "SELECT SUM(c.price) 
+                  FROM enrollments e
+                  JOIN courses c ON e.course_id = c.id";
+        $result = $this->conn->query($query)->fetchColumn();
+        // Nếu không có kết quả, trả về 0
+        return $result ?: 0;
+    }
 }
     
 
