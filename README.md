@@ -33,25 +33,6 @@ Dự án này là một nền tảng học tập trực tuyến  cơ bản, đư
 * Thống kê tài khoản
 * Phê duyệt khóa học
 
-## 🚀 HƯỚNG DẪN CÀI ĐẶT
-
-1.  **Môi trường:** Cần XAMPP/WAMPP/MAMP (PHP & MySQL).
-2.  **Clone Repository:**
-    ```bash
-    git clone 
-    ```
-3.  **Cấu hình CSDL:**
-    * Tạo CSDL mới có tên `onlinecourse`.
-    * Import file SQL gốc (`onlinecourse.sql`) để khôi phục cấu trúc bảng.
-4.  **Cấu hình BASE URL:**
-    * Mở file `config/config.php` và cập nhật hằng số `BASE_URL` (ví dụ: `/tên_thư_mục_gốc/`).
-
-### 🔑 Tài khoản Test
-| Vai trò | Username | Mật khẩu (Ví dụ) |
-| :--- | :--- | :--- |
-| **Admin** | admin@gmail.com | 123456  |
-| **Giảng viên** | gv@gmail.com | 123456 |
-| **Học viên** | hv@gmail.com | 123456 |
 
 ## 👥 THÀNH VIÊN NHÓM
 
